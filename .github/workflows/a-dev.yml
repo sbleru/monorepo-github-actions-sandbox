@@ -7,6 +7,10 @@ on:
       - "packages/a/**"
   workflow_dispatch:
 
+env:
+  # キャッシュをリセットしたいときはインクリメントする
+  cache-version: v1
+
 defaults:
   run:
     shell: bash
@@ -25,18 +29,29 @@ jobs:
           # cache: 'npm'
           # cache-dependency-path: '**/package-lock.json'
 
+      # キャッシュ対象のdirectoryを取得
+      - name: Get npm cache directory
+        id: npm-cache-dir
+        run: |
+          echo "::set-output name=dir::$(npm config get cache)"
+
+      # キャッシュ
       - name: Cache npm dir
         id: cache-npm
         uses: actions/cache@v3
         with:
-          path: '**/node_modules'
+          path: ${{ steps.npm-cache-dir.outputs.dir }}
           # @see https://docs.github.com/ja/actions/using-workflows/caching-dependencies-to-speed-up-workflows#using-contexts-to-create-cache-keys
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          key: ${{ env.cache-version }}-${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
           restore-keys: |
             ${{ runner.os }}-node-
 
-      - if: ${{ steps.cache-npm.outputs.cache-hit != 'true' }}
-        name: Setup root
+      # 「Cache npm dir」では、node_modulesはキャッシュされないのでキャッシュがあっても実行する
+      # リモートから取得しないためちょっと早くなる
+      # nodeバージョンが変わると壊れるのでnode_modulesをキャッシュしないのが推奨らしい
+      # @see https://github.com/actions/cache/blob/main/examples.md#node---npm
+      # - if: ${{ steps.cache-npm.outputs.cache-hit != 'true' }}
+      - name: Setup root
         run: |
           npm ci --ignore-scripts
 
