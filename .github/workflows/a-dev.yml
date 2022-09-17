@@ -21,21 +21,22 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: 16
-          cache: 'npm'
-          cache-dependency-path: '**/package-lock.json'
+          # これはnode_modulesをキャッシュしない
+          # cache: 'npm'
+          # cache-dependency-path: '**/package-lock.json'
 
-      # - name: Cache npm dir
-      #   id: cache-npm
-      #   uses: actions/cache@v3
-      #   with:
-      #     path: ~/.npm
-      #     # @see https://docs.github.com/ja/actions/using-workflows/caching-dependencies-to-speed-up-workflows#using-contexts-to-create-cache-keys
-      #     key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-      #     restore-keys: |
-      #       ${{ runner.os }}-node-
+      - name: Cache npm dir
+        id: cache-npm
+        uses: actions/cache@v3
+        with:
+          path: '**/node_modules'
+          # @see https://docs.github.com/ja/actions/using-workflows/caching-dependencies-to-speed-up-workflows#using-contexts-to-create-cache-keys
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
 
-      # - if: ${{ steps.cache-npm.outputs.cache-hit != 'true' }}
-      - name: Setup root
+      - if: ${{ steps.cache-npm.outputs.cache-hit != 'true' }}
+        name: Setup root
         run: |
           npm ci --ignore-scripts
 
