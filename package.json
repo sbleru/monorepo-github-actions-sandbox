@@ -1,0 +1,8 @@
+{
+  "name": "monorepo-github-actions-sandbox",
+  "workspaces": [
+    "packages/a",
+    "packages/b",
+    "packages/common"
+  ]
+}
